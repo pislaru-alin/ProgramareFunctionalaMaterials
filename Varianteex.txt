@@ -1,0 +1,143 @@
+1.
+Resolve the next exercise in Haskell:
+The following are given:
+An Expr data type that represents arithmetic expressions containing variables, integer values ​​and addition operators
+and multiplication.
+date Expr
+A class of Operations types that contains a simplification function.
+class Operations exp where
+simplify: exp -> exp
+Write an instance of the Operations class for the Expr data type, so that the simplification operation
+perform the calculations with the values ​​0 and 1, more precisely make the simplifications:
+• a+0=0+a=a
+• a 0-0 a-0
+• a*1=1*a=a
+You can test the solution on the following expressions:
+ex1 = ((Val 1):+: (Var "x")) :*: (Val 1)
+ex2 ex1 :+: (Wave 3)
+ex3= ((Wave 0) :*: (Wave 2)) :+: (Wave 3)
+ex4ex3 :: Wave 5
+Lime String | Wave Int | Expr :+: Expr | Expr :: Expr
+deriving (Show, Eq)
+
+
+Here's an implementation of the Operations class for the Expr data type:
+
+java
+Copy code
+data Expr = Val Int | Var String | Expr :+: Expr | Expr :*: Expr
+  deriving (Show, Eq)
+
+instance Operations Expr where
+  simplify (Val n) = Val n
+  simplify (Var s) = Var s
+  simplify (l :+: r) = let l' = simplify l
+                           r' = simplify r
+                       in case (l', r') of
+                         (Val 0, x) -> x
+                         (x, Val 0) -> x
+                         (x, y) -> x :+: y
+  simplify (l :*: r) = let l' = simplify l
+                           r' = simplify r
+                       in case (l', r') of
+                         (Val 1, x) -> x
+                         (x, Val 1) -> x
+                         (x, y) -> x :*: y
+And here's the output of testing the expressions ex1, ex2, ex3, and ex4:
+
+markdown
+Copy code
+> simplify ex1
+Val 1
+> simplify ex2
+(Val 1 :+: Var "x") :+: Val 3
+> simplify ex3
+Val 3
+> simplify ex4
+Val 5
+
+
+2.
+Resolve the next problem in Haskell:
+Write a function that transforms a text (character string) into its bird language version.
+The transformation of a character will be done as follows:
+if the character is a vowel, add a 'p' and the vowel again, e.g., 'a' -> "water"
+if the character is not a vowel, it remains unchanged, e.g., 'p'>"p"
+To solve the problem in two ways (a solution without monads and a solution with monads).
+Examples:
+"I'm hungry" -> "Mipi-epe fopoapamepe"
+"Ana" "Apanapa"
+.
+
+
+Here's the first solution without monads:
+
+rust
+Copy code
+isVowel :: Char -> Bool
+isVowel c = c `elem` "aeiouAEIOU"
+
+bird :: String -> String
+bird = concatMap (\c -> if isVowel c then [c, 'p', c] else [c])
+
+example1 = bird "I'm hungry" -- "Mipi-epe fopoapamepe"
+example2 = bird "Ana" -- "Apanapa"
+And here's the second solution using the Maybe monad:
+
+rust
+Copy code
+bird :: String -> String
+bird = concatMap (\c -> case c of
+                         'a' -> "apa"
+                         'e' -> "epe"
+                         'i' -> "ipi"
+                         'o' -> "opo"
+                         'u' -> "upu"
+                         'A' -> "Apa"
+                         'E' -> "Epe"
+                         'I' -> "Ipi"
+                         'O' -> "Opo"
+                         'U' -> "Upu"
+                         _   -> [c])
+
+example1 = bird "I'm hungry" -- "Mipi-epe fopoapamepe"
+example2 = bird "Ana" -- "Apanapa"
+
+
+3.
+Resolve the next problem in Haskell:
+The data type is given
+newtype ReaderM env a = ReaderM { runReaderM :: env -> Maybe a }
+Write the complete instance of the Monad class for the ReaderM type, so that it keeps the property of
+monad. There is no need to create instances for the Applicative and Functor classes.
+You can test the solution on the following expression:
+testReaderM :: ReaderM String String
+testReaderM = ma >>= k
+where
+me =
+ReaderM
+(str -> if length str> 10 then Just (length str) else Nothing)
+k wave =
+ReaderM
+(\ str -> if val 'mod 2 == 0 then Just "par" else Nothing)
+
+
+
+Here's the implementation of the Monad instance for the ReaderM type:
+
+rust
+Copy code
+newtype ReaderM env a = ReaderM { runReaderM :: env -> Maybe a }
+
+instance Monad (ReaderM env) where
+  return a = ReaderM (\_ -> Just a)
+  ma >>= k = ReaderM $ \env -> do
+    a <- runReaderM ma env
+    runReaderM (k a) env
+
+testReaderM :: ReaderM String String
+testReaderM = ma >>= k
+  where ma = ReaderM (\str -> if length str > 10 then Just (length str) else Nothing)
+        k val = ReaderM (\_ -> if val `mod` 2 == 0 then Just "par" else Nothing)
+
+
